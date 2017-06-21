@@ -4,6 +4,7 @@ Email: daiyue@usc.edu
 '''
 
 import sys
+import copy
 
 # function reads content from input file
 def readInput():
@@ -68,7 +69,7 @@ def sortByAlphabet(list):
 # define class state which store the state of game
 class state:
     depth = 0
-    parent = None
+    v = 0
     alpha = float("-inf")
     beta = float("inf")
     nextMove = []
@@ -86,8 +87,9 @@ class state:
 def minimax(state, input):
     return maxValue(state, input)
 # define the function to find all possible next moves and check depth
-def terminalTest(state, input):
+def terminalTest(state, input, player):
     # check the depth
+    possibleMoves = []
     if state.depth == input['maxDepthOfTree']:
         return []
     else:
@@ -101,36 +103,58 @@ def terminalTest(state, input):
                 if state.assignment[neighbor] == color:
                     continue
                 else:
-                    
+                    newState = copy.deepcopy(state)
+                    # update the depth of the next possible state
+                    newState.depth = newState.depth + 1
+                    newState.toBeExplored.remove(city)
+                    # delete the city from the toBeExplored list
+                    newState.playersCities[player].append(city)
+                    # update the color assignment
+                    newState.assignment[city] = color
+                    # update the score of the player
+                    newState.playersScore[player] = \
+                        newState.platersScore[player] + \
+                        input['scores'][player][color]
+                    possibleMoves.append(newState)
 
 # define maxValue fuction here for player1
 def maxValue(state, input):
     moves = terminalTest(state, input)
     if moves.length == 0:
+        #evaluate the state
+        state.v = state.playersScore['1'] - state.playersScore['2']
         return state
     else:
-        v = float('-inf')
+        state.v = float('-inf')
         for move in moves:
-            v = max(v, minValue(move))
-            if v >= state.beta:
+            nextMove = minValue(move, input)
+            if state.v < nextMove.v:
+                state.nextMove = nextMove
+            state.v = max(state.v, nextMove.v)
+            if state.v >= state.beta:
                 return state
             else:
-                state.alpha = max(state.alpha, v)
+                state.alpha = max(state.alpha, state.v)
         return state
 
 # define minValue function here for player2
 def minValue(state, input):
     moves = terminalTest(state, input)
     if moves.length == 0:
+        #evaluate the state
+        state.v = state.playersScore['1'] - state.playersScore['2']
         return state
     else:
-        v = float('inf')
+        state.v = float('inf')
         for move in moves:
-            state.v = min(v, maxValue(move))
-            if v <= state.alpha:
+            nextMove = maxValue(move, input)
+            if state.v > nextMove.v:
+                state.nextMove = nextMove
+            state.v = min(state.v, nextMove.v)
+            if state.v <= state.alpha:
                 return state
             else:
-                state.beta = min(state.beta, v)
+                state.beta = min(state.beta, state.v)
         return state
 
 # main()
