@@ -68,20 +68,19 @@ def sortByAlphabet(list):
 
 # define class state which store the state of game
 class state:
-    depth = 0
-    v = 0
-    alpha = float("-inf")
-    beta = float("inf")
-    nextMove = []
-    toBeExplored = []
-    assignment = {}
-    playersScore = {'1': 0, '2': 0}
-    playersCities = {'1': [], '2': []}
+
     def __init__(self, connections):
+        self.depth = 0
+        self.v = 0
+        self.alpha = float("-inf")
+        self.beta = float("inf")
+        self.nextMove = []
+        self.explored = []
+        self.assignment = {}
+        self.playersScore = {'1': 0, '2': 0}
+        self.playersCities = {'1': [], '2': []}
         for city in connections:
-            self.toBeExplored.append(city)
             self.assignment[city] = ""
-        self.toBeExplored = sortByAlphabet(self.toBeExplored)
 
 # define minimax function here
 def minimax(state, input):
@@ -90,12 +89,17 @@ def minimax(state, input):
 def terminalTest(state, input, player):
     # check the depth
     possibleMoves = []
-    if state.depth == input['maxDepthOfTree']:
+    if state.depth == int(input['maxDepthOfTree']):
         return []
     else:
-        for city in state.toBeExplored:
+        toBeExplored = []
+        for city in state.explored:
+            neighbors = input['connections'][city]
+            toBeExplored = list(set(toBeExplored + neighbors))
+        sortByAlphabet(toBeExplored)
+        for city in toBeExplored:
             for color in input['colors']:
-                neighbors = input['connecitons'][city]
+                neighbors = input['connections'][city]
                 for neighbor in neighbors:
                     if state.assignment[neighbor] == color:
                         #skip this color and checck the next one
@@ -106,21 +110,21 @@ def terminalTest(state, input, player):
                     newState = copy.deepcopy(state)
                     # update the depth of the next possible state
                     newState.depth = newState.depth + 1
-                    newState.toBeExplored.remove(city)
-                    # delete the city from the toBeExplored list
+                    newState.explored.append(city)
                     newState.playersCities[player].append(city)
                     # update the color assignment
                     newState.assignment[city] = color
                     # update the score of the player
                     newState.playersScore[player] = \
-                        newState.platersScore[player] + \
-                        input['scores'][player][color]
+                        newState.playersScore[player] + \
+                        int(input['scores'][player][color])
                     possibleMoves.append(newState)
+        return possibleMoves
 
 # define maxValue fuction here for player1
 def maxValue(state, input):
-    moves = terminalTest(state, input)
-    if moves.length == 0:
+    moves = terminalTest(state, input, "1")
+    if len(moves) == 0:
         #evaluate the state
         state.v = state.playersScore['1'] - state.playersScore['2']
         return state
@@ -139,8 +143,8 @@ def maxValue(state, input):
 
 # define minValue function here for player2
 def minValue(state, input):
-    moves = terminalTest(state, input)
-    if moves.length == 0:
+    moves = terminalTest(state, input, "2")
+    if len(moves) == 0:
         #evaluate the state
         state.v = state.playersScore['1'] - state.playersScore['2']
         return state
@@ -169,13 +173,11 @@ for firstMove in input["playersAndFirstMove"]:
     firstMoveInfo = firstMoveInfo[0].split(":")
     city = firstMoveInfo[0]
     color = firstMoveInfo[1]
-    if city in rootNode.toBeExplored:
-        rootNode.toBeExplored.remove(city)
+    rootNode.explored.append(city)
     #extract the score of the color based on the current player
     score = input['scores'][player][color]
     #update assignment in rootNode state
     rootNode.assignment[city] = color
     rootNode.playersCities[player].append(city)
     rootNode.playersScore[player] = rootNode.playersScore[player] + int(score)
-
-    test = 0;
+minimax(rootNode, input)
