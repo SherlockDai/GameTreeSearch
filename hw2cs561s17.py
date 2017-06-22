@@ -72,8 +72,6 @@ class state:
     def __init__(self, connections):
         self.depth = 0
         self.v = 0
-        self.alpha = float("-inf")
-        self.beta = float("inf")
         self.nextMove = []
         self.explored = []
         self.assignment = {}
@@ -84,7 +82,7 @@ class state:
 
 # define minimax function here
 def minimax(state, input):
-    return maxValue(state, input)
+    return maxValue(state, input, float('-inf'), float('inf'))
 # define the function to find all possible next moves and check depth
 def terminalTest(state, input, player):
     # check the depth
@@ -93,10 +91,15 @@ def terminalTest(state, input, player):
         return []
     else:
         toBeExplored = []
+        # join all neighbors
         for city in state.explored:
             neighbors = input['connections'][city]
             toBeExplored = list(set(toBeExplored + neighbors))
-        sortByAlphabet(toBeExplored)
+        # remove explored cities
+        for city in state.explored:
+            toBeExplored.remove(city)
+        # sort cities to be explored
+        toBeExplored = sortByAlphabet(toBeExplored)
         for city in toBeExplored:
             for color in input['colors']:
                 neighbors = input['connections'][city]
@@ -122,7 +125,7 @@ def terminalTest(state, input, player):
         return possibleMoves
 
 # define maxValue fuction here for player1
-def maxValue(state, input):
+def maxValue(state, input, alpha, beta):
     moves = terminalTest(state, input, "1")
     if len(moves) == 0:
         #evaluate the state
@@ -131,18 +134,18 @@ def maxValue(state, input):
     else:
         state.v = float('-inf')
         for move in moves:
-            nextMove = minValue(move, input)
+            nextMove = minValue(move, input, alpha, beta)
             if state.v < nextMove.v:
                 state.nextMove = nextMove
             state.v = max(state.v, nextMove.v)
-            if state.v >= state.beta:
+            if state.v >= beta:
                 return state
             else:
-                state.alpha = max(state.alpha, state.v)
+                alpha = max(alpha, state.v)
         return state
 
 # define minValue function here for player2
-def minValue(state, input):
+def minValue(state, input, alpha, beta):
     moves = terminalTest(state, input, "2")
     if len(moves) == 0:
         #evaluate the state
@@ -151,14 +154,14 @@ def minValue(state, input):
     else:
         state.v = float('inf')
         for move in moves:
-            nextMove = maxValue(move, input)
+            nextMove = maxValue(move, input, alpha, beta)
             if state.v > nextMove.v:
                 state.nextMove = nextMove
             state.v = min(state.v, nextMove.v)
-            if state.v <= state.alpha:
+            if state.v <= alpha:
                 return state
             else:
-                state.beta = min(state.beta, state.v)
+                beta = min(beta, state.v)
         return state
 
 # main()
@@ -181,3 +184,4 @@ for firstMove in input["playersAndFirstMove"]:
     rootNode.playersCities[player].append(city)
     rootNode.playersScore[player] = rootNode.playersScore[player] + int(score)
 minimax(rootNode, input)
+test = 0
