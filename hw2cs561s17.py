@@ -5,7 +5,8 @@ Email: daiyue@usc.edu
 
 import sys
 import copy
-
+import time
+start_time = time.time()
 # function reads content from input file
 def readInput():
     # initiate lines list to store the content of input file
@@ -82,7 +83,13 @@ class state:
 
 # define minimax function here
 def minimax(state, input):
-    return maxValue(state, input, float('-inf'), float('inf'))
+    # OPEN OUTPUT FILE
+    output = open("output.txt", "wb")
+    rootState = maxValue(state, input, float('-inf'), float('inf'), output)
+    line = "%s, %s, %s" % (rootState.nextMove.playersCities['1'][-1],
+                           state.nextMove.assignment[state.nextMove.playersCities['1'][-1]],
+                           state.nextMove.v)
+    output.write(line)
 # define the function to find all possible next moves and check depth
 def terminalTest(state, input, player):
     # check the depth
@@ -125,46 +132,75 @@ def terminalTest(state, input, player):
         return possibleMoves
 
 # define maxValue fuction here for player1
-def maxValue(state, input, alpha, beta):
+def maxValue(state, input, alpha, beta, output):
     moves = terminalTest(state, input, "1")
     if len(moves) == 0:
         #evaluate the state
         state.v = state.playersScore['1'] - state.playersScore['2']
+        line = "%s, %s, %s, %s, %s, %s\n" % (state.playersCities['2'][-1], state.assignment[state.playersCities['2'][-1]],
+                                            state.depth, state.v, str(alpha), str(beta))
+        output.write(line)
         return state
     else:
         state.v = float('-inf')
+        line = "%s, %s, %s, %s, %s, %s\n" % (state.playersCities['2'][-1], state.assignment[state.playersCities['2'][-1]],
+                                            state.depth, state.v, str(alpha), str(beta))
+        output.write(line)
         for move in moves:
-            nextMove = minValue(move, input, alpha, beta)
+            nextMove = minValue(move, input, alpha, beta, output)
             if state.v < nextMove.v:
                 state.nextMove = nextMove
             state.v = max(state.v, nextMove.v)
             if state.v >= beta:
+                line = "%s, %s, %s, %s, %s, %s\n" % (
+                state.playersCities['2'][-1], state.assignment[state.playersCities['2'][-1]],
+                state.depth, state.v, str(alpha), str(beta))
+                output.write(line)
                 return state
             else:
                 alpha = max(alpha, state.v)
+                line = "%s, %s, %s, %s, %s, %s\n" % (
+                state.playersCities['2'][-1], state.assignment[state.playersCities['2'][-1]],
+                state.depth, state.v, str(alpha), str(beta))
+                output.write(line)
         return state
 
 # define minValue function here for player2
-def minValue(state, input, alpha, beta):
+def minValue(state, input, alpha, beta, output):
     moves = terminalTest(state, input, "2")
     if len(moves) == 0:
         #evaluate the state
         state.v = state.playersScore['1'] - state.playersScore['2']
+        line = "%s, %s, %s, %s, %s, %s\n" % (state.playersCities['1'][-1], state.assignment[state.playersCities['1'][-1]],
+                                            state.depth, state.v, str(alpha), str(beta))
+        output.write(line)
         return state
     else:
         state.v = float('inf')
+        line = "%s, %s, %s, %s, %s, %s\n" % (state.playersCities['1'][-1], state.assignment[state.playersCities['1'][-1]],
+                                            state.depth, state.v, str(alpha), str(beta))
+        output.write(line)
         for move in moves:
-            nextMove = maxValue(move, input, alpha, beta)
+            nextMove = maxValue(move, input, alpha, beta, output)
             if state.v > nextMove.v:
                 state.nextMove = nextMove
             state.v = min(state.v, nextMove.v)
             if state.v <= alpha:
+                line = "%s, %s, %s, %s, %s, %s\n" % (
+                state.playersCities['1'][-1], state.assignment[state.playersCities['1'][-1]],
+                state.depth, state.v, str(alpha), str(beta))
+                output.write(line)
                 return state
             else:
                 beta = min(beta, state.v)
+                line = "%s, %s, %s, %s, %s, %s\n" % (
+                state.playersCities['1'][-1], state.assignment[state.playersCities['1'][-1]],
+                state.depth, state.v, str(alpha), str(beta))
+                output.write(line)
         return state
 
 # main()
+
 input = readInput()
 rootNode = state(input['connections'])
 #initiate the information of the rootNode
@@ -184,4 +220,5 @@ for firstMove in input["playersAndFirstMove"]:
     rootNode.playersCities[player].append(city)
     rootNode.playersScore[player] = rootNode.playersScore[player] + int(score)
 minimax(rootNode, input)
-test = 0
+print("--- %s seconds ---" % (time.time() - start_time))
+
